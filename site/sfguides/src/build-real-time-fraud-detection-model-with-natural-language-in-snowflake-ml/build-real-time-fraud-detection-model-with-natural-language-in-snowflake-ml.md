@@ -580,14 +580,14 @@ Before deploying, suspend the existing FRAUD_INFERENCE_SERVICE_V1 to free up com
 
 Use the CREATE GATEWAY SQL statement to create an SPCS Gateway called FRAUD_AB_GATEWAY that routes 80% of traffic to FRAUD_INFERENCE_SERVICE_V1 and 20% to FRAUD_INFERENCE_SERVICE_V2.
 
-After the gateway is created, create a gateway model monitor using CREATE MODEL MONITOR with GATEWAY = FRAUD_AB_GATEWAY, FUNCTION = 'PREDICT', REFRESH_INTERVAL = '1 minute', and AGGREGATION_WINDOW = '1 hour' so that monitoring results appear in Snowsight under AI & ML > Models > Gateways.
+After the gateway is created, create a gateway model monitor using CREATE MODEL MONITOR with GATEWAY = FRAUD_AB_GATEWAY, FUNCTION = 'PREDICT', REFRESH_INTERVAL = '1 minute', and AGGREGATION_WINDOW = '1 hour'
 
 Send sample inference requests through both services to populate autocaptured logs, then verify the monitor is ACTIVE and metrics are being aggregated.
 ```
 
 ### What Gets Generated
 
-CoCe trains the updated model, registers it, and deploys a second service:
+CoCo trains the updated model, registers it, and deploys a second service:
 
 ```
 Complete Setup — All Steps Done
@@ -660,6 +660,18 @@ The dashboard shows:
 ![Gateway Overview in Snowsight showing FRAUD_AB_GATEWAY with 80/20 traffic split between V1 and V2 services](assets/gateway_overview_snowsight.jpg)
 
 Use **Edit Gateway** to adjust the traffic split as the test progresses.
+
+> **Note:** Gateways automatically route traffic away from unhealthy endpoints. If a service becomes unavailable, requests are redirected to the remaining healthy endpoints without manual intervention.
+
+### Promote V2 to Production
+
+When the A/B test concludes and V2 metrics are satisfactory, shift 100% traffic to V2. Use this prompt in CoCo:
+
+```
+The A/B test is complete and V2 looks good. Alter FRAUD_AB_GATEWAY to route 100% of traffic to FRAUD_INFERENCE_SERVICE_V2 and 0% to V1. Once confirmed, drop FRAUD_INFERENCE_SERVICE_V1 to free compute pool resources.
+```
+
+CoCo will generate and execute the `ALTER GATEWAY` statement to shift all traffic to V2, then drop the V1 service. For details on the ALTER GATEWAY syntax, see the [ALTER GATEWAY reference](https://docs.snowflake.com/en/sql-reference/sql/alter-gateway).
 
 
 <!-- ------------------------ -->
